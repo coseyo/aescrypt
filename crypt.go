@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// encrypt text by key
 func Encrypt(src, key []byte) ([]byte, error) {
 	key = toMD5(key)
 	block, err := aes.NewCipher(key)
@@ -31,6 +32,7 @@ func Encrypt(src, key []byte) ([]byte, error) {
 	return out, nil
 }
 
+// decrypt text by key
 func Decrypt(src, key []byte) ([]byte, error) {
 	key = toMD5(key)
 	block, err := aes.NewCipher(key)
@@ -61,6 +63,7 @@ func UrlSafeBase64Encode(data []byte) string {
 	return str
 }
 
+// make the key length always 32
 func toMD5(bytes []byte) []byte {
 	md5Ctx := md5.New()
 	md5Ctx.Write(bytes)
@@ -85,7 +88,7 @@ func zeroPadding(ciphertext []byte, blockSize int) []byte {
 	return append(ciphertext, padtext...)
 }
 
-func ZeroUnPadding(origData []byte) []byte {
+func zeroUnPadding(origData []byte) []byte {
 	return bytes.TrimFunc(origData,
 		func(r rune) bool {
 			return r == rune(0)
