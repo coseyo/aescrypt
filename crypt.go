@@ -9,19 +9,6 @@ import (
 	"strings"
 )
 
-func toMD5(bytes []byte) []byte {
-	md5Ctx := md5.New()
-	md5Ctx.Write(bytes)
-	return md5Ctx.Sum(nil)
-}
-
-func UrlSafeBase64Encode(data []byte) string {
-	str := base64.StdEncoding.EncodeToString(data)
-	str = strings.Replace(str, "+", "-", -1)
-	str = strings.Replace(str, "/", "_", -1)
-	return str
-}
-
 func Encrypt(src, key []byte) ([]byte, error) {
 	key = toMD5(key)
 	block, err := aes.NewCipher(key)
@@ -29,8 +16,8 @@ func Encrypt(src, key []byte) ([]byte, error) {
 		return nil, err
 	}
 	bs := block.BlockSize()
-	//	src = ZeroPadding(src, bs)
-	src = PKCS5Padding(src, bs)
+	//	src = zeroPadding(src, bs)
+	src = pkcs5Padding(src, bs)
 	if len(src)%bs != 0 {
 		return nil, errors.New("Need a multiple of the blocksize")
 	}
@@ -61,24 +48,38 @@ func Decrypt(src, key []byte) ([]byte, error) {
 		src = src[bs:]
 		dst = dst[bs:]
 	}
-	//	out = ZeroUnPadding(out)
-	out = PKCS5UnPadding(out)
+	//	out = zeroUnPadding(out)
+	out = pkcs5UnPadding(out)
 	return out, nil
 }
 
-func PKCS5Padding(ciphertext []byte, blockSize int) []byte {
+// make the encrypt text can be part of url
+func UrlSafeBase64Encode(data []byte) string {
+	str := base64.StdEncoding.EncodeToString(data)
+	str = strings.Replace(str, "+", "-", -1)
+	str = strings.Replace(str, "/", "_", -1)
+	return str
+}
+
+func toMD5(bytes []byte) []byte {
+	md5Ctx := md5.New()
+	md5Ctx.Write(bytes)
+	return md5Ctx.Sum(nil)
+}
+
+func pkcs5Padding(ciphertext []byte, blockSize int) []byte {
 	padding := blockSize - len(ciphertext)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
 }
 
-func PKCS5UnPadding(origData []byte) []byte {
+func pkcs5UnPadding(origData []byte) []byte {
 	length := len(origData)
 	unpadding := int(origData[length-1])
 	return origData[:(length - unpadding)]
 }
 
-func ZeroPadding(ciphertext []byte, blockSize int) []byte {
+func zeroPadding(ciphertext []byte, blockSize int) []byte {
 	padding := blockSize - len(ciphertext)%blockSize
 	padtext := bytes.Repeat([]byte{0}, padding)
 	return append(ciphertext, padtext...)
